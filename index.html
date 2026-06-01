@@ -3,76 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APT Controller Protocol Scanner (V3)</title>
+    <title>APT Protocol Expert Sniffer (V4)</title>
     <style>
-        body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px 10px; background-color: #f8f9fa; color: #333; }
-        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        h1 { color: #007bff; font-size: 20px; margin-bottom: 20px; }
-        button { padding: 12px 24px; font-size: 15px; font-weight: bold; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 25px; width: 100%; margin-bottom: 10px; }
-        #status { font-size: 14px; font-weight: bold; padding: 12px; border-radius: 8px; background: #e9ecef; color: #495057; margin-bottom: 20px; }
-        .connected { color: #155724 !important; background: #d4edda !important; }
-        .error { color: #721c24 !important; background: #f8d7da !important; }
+        body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px 10px; background-color: #1a1a1a; color: #e0e0e0; }
+        .container { max-width: 500px; margin: 0 auto; background: #2d2d2d; padding: 20px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.3); }
+        h1 { color: #0088ff; font-size: 20px; margin-bottom: 15px; }
         
-        .cmd-grid { display: grid; grid-template-columns: 1px 1fr; gap: 8px; margin-top: 15px; display: none; }
-        .cmd-btn { background-color: #28a745; border-radius: 8px; font-size: 13px; padding: 10px; margin: 0; width: auto; }
+        .setup-box { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
+        label { font-size: 13px; font-weight: bold; color: #aaa; display: block; margin-bottom: 5px; }
+        select { width: 100%; padding: 8px; border-radius: 6px; background: #333; color: #fff; border: 1px solid #444; }
+        
+        button { padding: 12px 24px; font-size: 15px; font-weight: bold; cursor: pointer; background-color: #0088ff; color: white; border: none; border-radius: 25px; width: 100%; margin-bottom: 15px; }
+        button:hover { background-color: #0066cc; }
+        
+        #status { font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #383838; color: #bbb; margin-bottom: 15px; border-left: 5px solid #666; }
+        .connected { border-left-color: #28a745 !important; color: #28a745 !important; }
+        .error { border-left-color: #dc3545 !important; color: #dc3545 !important; }
+        
+        .control-panel { display: none; margin-top: 15px; }
+        .panel-title { font-size: 12px; color: #ffaa00; text-align: left; margin-bottom: 8px; font-weight: bold; }
+        .grid-buttons { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        .cmd-btn { background-color: #28a745; border-radius: 6px; font-size: 13px; padding: 10px; margin: 0; }
         .cmd-btn:hover { background-color: #218838; }
         
-        #log { background: #121212; color: #00ff66; padding: 15px; border-radius: 10px; text-align: left; height: 280px; overflow-y: auto; font-family: monospace; font-size: 11px; margin-top: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        .log-item { border-bottom: 1px solid #222; padding: 6px 0; word-break: break-all; }
-        .send-msg { color: #ffcc00; }
+        #log { background: #000; color: #00ff66; padding: 15px; border-radius: 10px; text-align: left; height: 300px; overflow-y: auto; font-family: monospace; font-size: 11px; margin-top: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); border: 1px solid #333; }
+        .log-item { border-bottom: 1px solid #111; padding: 6px 0; word-break: break-all; line-height: 1.4; }
+        .in-msg { color: #ff3366; font-weight: bold; }
+        .out-msg { color: #00bfff; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>เครื่องมือแสกนโปรโตคอล กล่อง APT</h1>
-        <button id="connectBtn">🔗 ค้นหาและเชื่อมต่อบลูทูธ</button>
-        <div id="status">สถานะ: ยังไม่ได้เชื่อมต่อ</div>
+        <h1>APT Expert Protocol Sniffer (V4)</h1>
         
-        <div id="cmdSection" class="cmd-grid">
-            <button class="cmd-btn" onclick="sendHex([0x3A, 0x00, 0x0D, 0x0A])">ส่งคำสั่งสไตล์ APT (0x3A)</button>
-            <button class="cmd-btn" onclick="sendHex([0x5A, 0x5A, 0x00, 0x00, 0x5A])">ส่งคำสั่งเปิดระบบ (0x5A)</button>
-            <button class="cmd-btn" onclick="sendHex([0x68, 0x01, 0x00, 0x69])">ยิงคำสั่งเช็กสถานะ (0x68)</button>
-            <button class="cmd-btn" onclick="sendHex([0xA5, 0xA5, 0x01, 0x01, 0x4C])">ส่ง Handshake จีน (0xA5)</button>
+        <div class="setup-box">
+            <label>🎯 เลือกพอร์ตกลุ่มเป้าหมายที่จะทดสอบ:</label>
+            <select id="portSelect">
+                <option value="ffe0">พอร์ตมาตรฐานสั้น (Service: 0xFFE0 / Char: 0xFFE1)</option>
+                <option value="f000c1">พอร์ตโรงงานยาว ตัวที่ 1 (Char: f000ffc1...)</option>
+                <option value="f000c2">พอร์ตโรงงานยาว ตัวที่ 2 (Char: f000ffc2...)</option>
+            </select>
         </div>
 
-        <div id="log">// ระบบพร้อมทำงาน...</div>
+        <button id="connectBtn">🔗 ค้นหาและเชื่อมต่อบลูทูธ</button>
+        <div id="status">สถานะ: รอการเชื่อมต่อ</div>
+        
+        <div id="controlPanel" class="control-panel">
+            <div class="panel-title">⚡ เลือกส่งโค้ดโครงสร้างโรงงานเพื่อทักทาย:</div>
+            <div class="grid-buttons">
+                <button class="cmd-btn" onclick="sendHex([0x68, 0x02, 0x00, 0x00, 0x6A])">โครงสร้างคำสั่ง APT (Check Status)</button>
+                <button class="cmd-btn" onclick="sendHex([0x3A, 0x1A, 0x00, 0x00, 0x0D, 0x0A])">โครงสร้างคำสั่งประหยัดพลังงาน (Wake Up)</button>
+                <button class="cmd-btn" onclick="sendHex([0x00])">ส่ง Null Byte (0x00) เช็กระบบสลีป</button>
+            </div>
+        </div>
+
+        <div id="log">// ยินดีต้อนรับสู่ระบบ Sniffer V4...</div>
     </div>
 
     <script>
-        // ใช้รหัสหลัก 0xFFE0 / 0xFFE1 จากภาพนิ่งแอปของคุณ
-        const TARGET_SERVICE_UUID = 0xffe0;          
-        const TARGET_CHARACTERISTIC_UUID = 0xffe1;   
-
         const connectBtn = document.getElementById('connectBtn');
         const statusDiv = document.getElementById('status');
         const logDiv = document.getElementById('log');
-        const cmdSection = document.getElementById('cmdSection');
+        const controlPanel = document.getElementById('controlPanel');
+        const portSelect = document.getElementById('portSelect');
 
         let gCharacteristic = null;
 
         connectBtn.addEventListener('click', async () => {
             try {
-                updateStatus("กำลังสแกนหาบลูทูธ...", "");
+                // ดึงค่า UUID ตามที่ผู้ใช้เลือกใน Dropdown
+                let serviceUuid, charUuid;
+                const selectedPort = portSelect.value;
+
+                if (selectedPort === "ffe0") {
+                    serviceUuid = 0xffe0;
+                    charUuid = 0xffe1;
+                } else if (selectedPort === "f000c1") {
+                    serviceUuid = 'f000ffc0-0451-4000-b000-000000000000';
+                    charUuid = 'f000ffc1-0451-4000-b000-000000000000';
+                } else {
+                    serviceUuid = 'f000ffc0-0451-4000-b000-000000000000';
+                    charUuid = 'f000ffc2-0451-4000-b000-000000000000';
+                }
+
+                updateStatus("กำลังค้นหาอุปกรณ์...", "");
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [TARGET_SERVICE_UUID] }]
+                    filters: [{ namePrefix: 'APT' }, { services: [serviceUuid] }],
+                    optionalServices: [serviceUuid]
                 });
 
-                updateStatus("กำลังเชื่อมต่อกับกล่อง...", "");
+                updateStatus("กำลังเชื่อมต่อบอร์ด...", "");
                 const server = await device.gatt.connect();
-                const service = await server.getPrimaryService(TARGET_SERVICE_UUID);
-                gCharacteristic = await service.getCharacteristic(TARGET_CHARACTERISTIC_UUID);
+                const service = await server.getPrimaryService(serviceUuid);
+                gCharacteristic = await service.getCharacteristic(charUuid);
 
-                updateStatus("เชื่อมต่อสำเร็จเรียบร้อย 🎉", "success");
-                logDiv.innerHTML = '// เปิดระบบดักฟังข้อมูลแล้ว ให้ทดสอบกดปุ่มด้านบนด้านล่างทีละปุ่ม...\n';
-                cmdSection.style.display = 'block'; 
+                updateStatus(`เชื่อมต่อสำเร็จคู่พอร์ต ${selectedPort.toUpperCase()} 🎉`, "success");
+                logDiv.innerHTML = '// เปิดช่องดักรับสัญญาณแจ้งเตือนสำเร็จแล้ว\n';
+                controlPanel.style.display = 'block';
 
                 await gCharacteristic.startNotifications();
                 gCharacteristic.addEventListener('characteristicvaluechanged', handleDataChanged);
 
                 device.addEventListener('gattserverdisconnected', () => {
-                    updateStatus("สัญญาณบลูทูธหลุดออกจากกล่อง!", "error");
-                    cmdSection.style.display = 'none';
+                    updateStatus("อุปกรณ์หลุดการเชื่อมต่อ!", "error");
+                    controlPanel.style.display = 'none';
                 });
 
             } catch (error) {
@@ -81,31 +116,30 @@
             }
         });
 
-        // ฟังก์ชันสั่งยิงรหัสคำสั่งออกจากเว็บไปหากล่อง
+        // ฟังก์ชันส่งค่าออก
         async function sendHex(byteArray) {
             if (!gCharacteristic) return;
             try {
                 const data = new Uint8Array(byteArray);
                 await gCharacteristic.writeValue(data);
-                printLog(`<span class="send-msg">👉 ยิงคำสั่งสำเร็จ: [${byteArray.map(x => '0x' + x.toString(16).toUpperCase()).join(', ')}]</span>`);
+                let hexString = byteArray.map(x => '0x' + x.toString(16).toUpperCase().padStart(2, '0')).join(', ');
+                printLog(`<span class="out-msg">➡️ ส่งสำเร็จ: [${hexString}]</span>`);
             } catch (error) {
-                printLog(`❌ ส่งคำสั่งไม่ได้: ${error.message}`);
+                printLog(`❌ ส่งไม่ผ่าน: ${error.message}`);
             }
         }
 
-        // ฟังก์ชันเมื่อกล่องตื่นและยอมคุยตอบกลับมา
+        // ฟังก์ชันดักจับเมื่อกล่องมีการเคลื่อนไหวส่งข้อมูล
         function handleDataChanged(event) {
             const value = event.target.value;
             let rawBytes = [];
             for (let i = 0; i < value.byteLength; i++) {
                 rawBytes.push(value.getUint8(i));
             }
-            
-            // แปลงเป็นเลขฐานสิบหกเพื่อให้ดูง่ายสไตล์นักพัฒนา
             let hexArray = rawBytes.map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0'));
-
             const time = new Date().toLocaleTimeString();
-            printLog(`🚨 [${time}] กล่องตอบรับกลับมาแล้ว!!<br>└─ ข้อมูลฐาน 16: <b>[${hexArray.join(', ')}]</b><br>└─ ข้อมูลฐาน 10: [${rawBytes.join(', ')}]`);
+            
+            printLog(`<span class="in-msg">📡 [${time}] ตรวจจับข้อมูลดิบไหลเข้าได้!!</span><br>  └─ HEX: [${hexArray.join(', ')}]<br>  └─ DEC: [${rawBytes.join(', ')}]`);
         }
 
         function printLog(msg) {
@@ -119,7 +153,7 @@
 
         function updateStatus(text, type) {
             statusDiv.innerText = "สถานะ: " + text;
-            statusDiv.className = ""; 
+            statusDiv.className = "";
             if (type === "success") statusDiv.classList.add('connected');
             if (type === "error") statusDiv.classList.add('error');
         }
