@@ -3,62 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APT Protocol Expert Sniffer (V4)</title>
+    <title>APT Protocol Complete Sniffer (V5)</title>
     <style>
-        body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px 10px; background-color: #1a1a1a; color: #e0e0e0; }
-        .container { max-width: 500px; margin: 0 auto; background: #2d2d2d; padding: 20px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.3); }
-        h1 { color: #0088ff; font-size: 20px; margin-bottom: 15px; }
+        body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px 10px; background-color: #121212; color: #e0e0e0; }
+        .container { max-width: 500px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.5); border: 1px solid #333; }
+        h1 { color: #00bfff; font-size: 20px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
         
-        .setup-box { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
-        label { font-size: 13px; font-weight: bold; color: #aaa; display: block; margin-bottom: 5px; }
-        select { width: 100%; padding: 8px; border-radius: 6px; background: #333; color: #fff; border: 1px solid #444; }
+        .setup-box { background: #262626; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; border: 1px solid #444; }
+        label { font-size: 13px; font-weight: bold; color: #00bfff; display: block; margin-bottom: 5px; }
+        select { width: 100%; padding: 10px; border-radius: 6px; background: #333; color: #fff; border: 1px solid #555; font-size: 14px; }
         
-        button { padding: 12px 24px; font-size: 15px; font-weight: bold; cursor: pointer; background-color: #0088ff; color: white; border: none; border-radius: 25px; width: 100%; margin-bottom: 15px; }
-        button:hover { background-color: #0066cc; }
+        button { padding: 14px 24px; font-size: 15px; font-weight: bold; cursor: pointer; background-color: #0088ff; color: white; border: none; border-radius: 25px; width: 100%; margin-bottom: 15px; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,136,255,0.3); }
+        button:hover { background-color: #0066cc; transform: translateY(-1px); }
         
-        #status { font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #383838; color: #bbb; margin-bottom: 15px; border-left: 5px solid #666; }
-        .connected { border-left-color: #28a745 !important; color: #28a745 !important; }
-        .error { border-left-color: #dc3545 !important; color: #dc3545 !important; }
+        #status { font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #262626; color: #aaa; margin-bottom: 15px; border-left: 5px solid #555; text-align: left; }
+        .connected { border-left-color: #28a745 !important; color: #28a745 !important; background: #1b3322 !important; }
+        .error { border-left-color: #dc3545 !important; color: #dc3545 !important; background: #331b1b !important; }
         
-        .control-panel { display: none; margin-top: 15px; }
-        .panel-title { font-size: 12px; color: #ffaa00; text-align: left; margin-bottom: 8px; font-weight: bold; }
+        .control-panel { display: none; margin-top: 15px; background: #262626; padding: 15px; border-radius: 10px; border: 1px solid #444; }
+        .panel-title { font-size: 13px; color: #ffaa00; text-align: left; margin-bottom: 10px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .grid-buttons { display: grid; grid-template-columns: 1fr; gap: 8px; }
-        .cmd-btn { background-color: #28a745; border-radius: 6px; font-size: 13px; padding: 10px; margin: 0; }
+        .cmd-btn { background-color: #28a745; border-radius: 6px; font-size: 13px; padding: 11px; margin: 0; box-shadow: 0 4px 8px rgba(40,167,69,0.2); }
         .cmd-btn:hover { background-color: #218838; }
+        .cmd-btn.blue { background-color: #17a2b8; }
+        .cmd-btn.blue:hover { background-color: #138496; }
         
-        #log { background: #000; color: #00ff66; padding: 15px; border-radius: 10px; text-align: left; height: 300px; overflow-y: auto; font-family: monospace; font-size: 11px; margin-top: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); border: 1px solid #333; }
-        .log-item { border-bottom: 1px solid #111; padding: 6px 0; word-break: break-all; line-height: 1.4; }
+        #log { background: #000; color: #00ff66; padding: 15px; border-radius: 10px; text-align: left; height: 320px; overflow-y: auto; font-family: monospace; font-size: 11px; margin-top: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.9); border: 1px solid #222; }
+        .log-item { border-bottom: 1px solid #111; padding: 6px 0; word-break: break-all; line-height: 1.5; }
         .in-msg { color: #ff3366; font-weight: bold; }
         .out-msg { color: #00bfff; }
+        .sys-msg { color: #aaaaaa; font-style: italic; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>APT Expert Protocol Sniffer (V4)</h1>
+        <h1>APT Protocol Sniffer (V5)</h1>
         
         <div class="setup-box">
-            <label>🎯 เลือกพอร์ตกลุ่มเป้าหมายที่จะทดสอบ:</label>
+            <label>🎯 พอร์ตเป้าหมายที่ต้องการดักฟังข้อมูล:</label>
             <select id="portSelect">
-                <option value="ffe0">พอร์ตมาตรฐานสั้น (Service: 0xFFE0 / Char: 0xFFE1)</option>
-                <option value="f000c1">พอร์ตโรงงานยาว ตัวที่ 1 (Char: f000ffc1...)</option>
-                <option value="f000c2">พอร์ตโรงงานยาว ตัวที่ 2 (Char: f000ffc2...)</option>
+                <option value="ffe0">พอร์ตสั้นมาตรฐาน (Service: 0xFFE0 -> Char: 0xFFE1)</option>
+                <option value="f000c1">พอร์ตยาวโรงงาน ชุดที่ 1 (Char: f000ffc1...)</option>
+                <option value="f000c2">พอร์ตยาวโรงงาน ชุดที่ 2 (Char: f000ffc2...)</option>
             </select>
         </div>
 
-        <button id="connectBtn">🔗 ค้นหาและเชื่อมต่อบลูทูธ</button>
-        <div id="status">สถานะ: รอการเชื่อมต่อ</div>
+        <button id="connectBtn">🔗 ค้นหาและเปิดช่องสัญญาณบลูทูธ</button>
+        <div id="status">สถานะ: รอสั่งรันการเชื่อมต่อ...</div>
         
         <div id="controlPanel" class="control-panel">
-            <div class="panel-title">⚡ เลือกส่งโค้ดโครงสร้างโรงงานเพื่อทักทาย:</div>
+            <div class="panel-title">⚡ เลือกยิงรหัสส่งข้อมูลเพื่อทดสอบการตอบรับ:</div>
             <div class="grid-buttons">
-                <button class="cmd-btn" onclick="sendHex([0x68, 0x02, 0x00, 0x00, 0x6A])">โครงสร้างคำสั่ง APT (Check Status)</button>
-                <button class="cmd-btn" onclick="sendHex([0x3A, 0x1A, 0x00, 0x00, 0x0D, 0x0A])">โครงสร้างคำสั่งประหยัดพลังงาน (Wake Up)</button>
-                <button class="cmd-btn" onclick="sendHex([0x00])">ส่ง Null Byte (0x00) เช็กระบบสลีป</button>
+                <button class="cmd-btn blue" onclick="sendHex([0x7B, 0x01, 0x01, 0x32, 0x7D])">ยิงรหัสโครงสร้างเปิดพอร์ตโรงงาน (0x7B...0x7D)</button>
+                <button class="cmd-btn" onclick="sendHex([0x68, 0x02, 0x00, 0x00, 0x6A])">ยิงรหัสสอบถามสถานะบอร์ดควบคุม (0x68...)</button>
+                <button class="cmd-btn" onclick="sendHex([0x3A, 0x00, 0x5A, 0x0D, 0x0A])">ยิงรหัสคำสั่งกระตุ้นการทำงานกล่อง APT</button>
+                <button class="cmd-btn blue" onclick="sendHex([0x00, 0x00, 0x00, 0x00])">ส่งข้อมูลเคลียร์พอร์ต (Null Check)</button>
             </div>
         </div>
 
-        <div id="log">// ยินดีต้อนรับสู่ระบบ Sniffer V4...</div>
+        <div id="log">// ระบบตรวจเตรียมความพร้อม V5 สำเร็จแล้ว...</div>
     </div>
 
     <script>
@@ -69,13 +73,16 @@
         const portSelect = document.getElementById('portSelect');
 
         let gCharacteristic = null;
+        let keepAliveInterval = null;
 
         connectBtn.addEventListener('click', async () => {
             try {
-                // ดึงค่า UUID ตามที่ผู้ใช้เลือกใน Dropdown
+                if (keepAliveInterval) clearInterval(keepAliveInterval);
+                
                 let serviceUuid, charUuid;
                 const selectedPort = portSelect.value;
 
+                // แมปพอร์ตเป้าหมายตามที่เลือก
                 if (selectedPort === "ffe0") {
                     serviceUuid = 0xffe0;
                     charUuid = 0xffe1;
@@ -87,59 +94,70 @@
                     charUuid = 'f000ffc2-0451-4000-b000-000000000000';
                 }
 
-                updateStatus("กำลังค้นหาอุปกรณ์...", "");
+                updateStatus("กำลังสแกนหาอุปกรณ์กล่อง...", "");
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ namePrefix: 'APT' }, { services: [serviceUuid] }],
                     optionalServices: [serviceUuid]
                 });
 
-                updateStatus("กำลังเชื่อมต่อบอร์ด...", "");
+                updateStatus("กำลังทำ Handshake เชื่อมต่อ...", "");
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService(serviceUuid);
                 gCharacteristic = await service.getCharacteristic(charUuid);
 
-                updateStatus(`เชื่อมต่อสำเร็จคู่พอร์ต ${selectedPort.toUpperCase()} 🎉`, "success");
-                logDiv.innerHTML = '// เปิดช่องดักรับสัญญาณแจ้งเตือนสำเร็จแล้ว\n';
+                updateStatus(`เชื่อมโยงพอร์ต ${selectedPort.toUpperCase()} สำเร็จ 🎉`, "success");
+                logDiv.innerHTML = '<div class="log-item sys-msg">⚙️ สั่งเริ่มเปิดฟังก์ชันฟังการแจ้งเตือน (Notifications Enabled)...</div>';
                 controlPanel.style.display = 'block';
 
+                // สั่งเปิดรับแจ้งเตือนข้อมูลเหมือนในล็อกของ nRF Connect
                 await gCharacteristic.startNotifications();
                 gCharacteristic.addEventListener('characteristicvaluechanged', handleDataChanged);
 
+                // ตั้งระบบ Auto-KeepAlive เพื่อส่งข้อมูลกระตุ้นทุกๆ 4 วินาที ไม่ให้เกิด Timeout
+                keepAliveInterval = setInterval(() => {
+                    if(gCharacteristic) {
+                        // ส่งคำสั่งเบาบางไปเพื่อเช็กว่าพอร์ตยังเปิดอยู่ไหม
+                        gCharacteristic.writeValue(new Uint8Array([0x00])).catch(() => {});
+                    }
+                }, 4000);
+
                 device.addEventListener('gattserverdisconnected', () => {
-                    updateStatus("อุปกรณ์หลุดการเชื่อมต่อ!", "error");
+                    updateStatus("กล่องตัดการเชื่อมต่อ (Disconnected)!", "error");
                     controlPanel.style.display = 'none';
+                    if (keepAliveInterval) clearInterval(keepAliveInterval);
                 });
 
             } catch (error) {
                 console.error(error);
-                updateStatus(`ผิดพลาด: ${error.message}`, "error");
+                updateStatus(`เชื่อมต่อล้มเหลว: ${error.message}`, "error");
             }
         });
 
-        // ฟังก์ชันส่งค่าออก
+        // ฟังก์ชันสั่งเขียนค่าข้อมูลออกไปที่กล่อง
         async function sendHex(byteArray) {
             if (!gCharacteristic) return;
             try {
                 const data = new Uint8Array(byteArray);
                 await gCharacteristic.writeValue(data);
                 let hexString = byteArray.map(x => '0x' + x.toString(16).toUpperCase().padStart(2, '0')).join(', ');
-                printLog(`<span class="out-msg">➡️ ส่งสำเร็จ: [${hexString}]</span>`);
+                printLog(`<span class="out-msg">➡️ ยิงคำสั่งสำเร็จ: [${hexString}]</span>`);
             } catch (error) {
-                printLog(`❌ ส่งไม่ผ่าน: ${error.message}`);
+                printLog(`❌ ส่งข้อมูลไม่ผ่าน: ${error.message}`);
             }
         }
 
-        // ฟังก์ชันดักจับเมื่อกล่องมีการเคลื่อนไหวส่งข้อมูล
+        // ฟังก์ชันหัวใจหลัก: ทำหน้าที่ดักจับค่าดิบเมื่อแอปหลักขยับหรือกล่องส่งค่าออกมา
         function handleDataChanged(event) {
             const value = event.target.value;
             let rawBytes = [];
             for (let i = 0; i < value.byteLength; i++) {
                 rawBytes.push(value.getUint8(i));
             }
+            // ข้อมูลเลขฐาน 16
             let hexArray = rawBytes.map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0'));
             const time = new Date().toLocaleTimeString();
             
-            printLog(`<span class="in-msg">📡 [${time}] ตรวจจับข้อมูลดิบไหลเข้าได้!!</span><br>  └─ HEX: [${hexArray.join(', ')}]<br>  └─ DEC: [${rawBytes.join(', ')}]`);
+            printLog(`<span class="in-msg">📡 [${time}] ตรวจพบข้อมูลดิบวิ่งกลับมาจากกล่อง!!</span><br>  └─ รหัส HEX: [${hexArray.join(', ')}]<br>  └─ รหัส DEC: [${rawBytes.join(', ')}]`);
         }
 
         function printLog(msg) {
