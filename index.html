@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APT Controller Bluetooth Receiver</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+        p.subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        button {
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 10px rgba(0,123,255,0.3);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #6c757d;
+            padding: 10px;
+            border-radius: 6px;
+            background: #e9ecef;
+        }
+        .connected {
+            color: #28a745 !important;
+            background: #d4edda !important;
+        }
+        .error {
+            color: #dc3545 !important;
+            background: #f8d7da !important;
+        }
+        #log {
+            margin-top: 25px;
+            background: #1e1e1e;
+            color: #a9b7c6;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .log-item {
+            border-bottom: 1px solid #333;
+            padding: 8px 0;
+        }
+        .time { color: #569cd6; }
+        .text-val { color: #ce9178; }
+        .byte-val { color: #b5cea8; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>ระบบดึงข้อมูลบลูทูธ กล่อง APT</h1>
+        <p class="subtitle">ดึงข้อมูล Real-time ผ่าน Web Bluetooth API (รองรับ Chrome / Edge)</p>
+        
+        <button id="connectBtn">🔍 ค้นหาและเชื่อมต่อกล่อง</button>
+        <div id="status">สถานะ: ยังไม่ได้เชื่อมต่อ</div>
+        
+        <div id="log">// ข้อมูลจากกล่องคอนโทรลเลอร์จะแสดงตรงนี้...</div>
+    </div>
+
+    <script>
+        // กำหนดรหัส UUID ตามที่ตรวจพบในแอป nRF Connect (Unknown Service 0xFFE0)
+        const TARGET_SERVICE_UUID = 0xffe0;          
+        const TARGET_CHARACTERISTIC_UUID = 0xffe1;   
+
+        const connectBtn = document.getElementById('connectBtn');
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+
+        // เคลียร์ Log ตอนเริ่ม
+        logDiv.innerHTML = '// รอการเชื่อมต่ออุปกรณ์...';
+
+        connectBtn.addEventListener('click', async () => {
+            try {
+                updateStatus("กำลังค้นหาอุปกรณ์...", "loading");
+                
+                // 1. ค้นหาอุปกรณ์บลูทูธที่มี Service UUID ตรงกับที่ระบุ
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [TARGET_SERVICE_UUID] }]
+                });
+
+                updateStatus(`กำลังเชื่อมต่อกับ ${device.name}...`, "loading");
+
+                // 2. เชื่อมต่อเข้ากับ GATT Server ของกล่อง
+                const server = await device.gatt.connect();
+
+                // 3. เข้าถึง Service หลัก
+                const service = await server.getPrimaryService(TARGET_SERVICE_UUID);
+
+                // 4. เข้าถึง Characteristic สำหรับรับส่งข้อมูล
+                const characteristic = await service.getCharacteristic(TARGET_CHARACTERISTIC_UUID);
+
+                updateStatus(`เชื่อมต่อสำเร็จกับ: ${device.name} 🎉`, "success");
+                logDiv.innerHTML = '// เริ่มต้นรับข้อมูลดิบจากกล่อง...\n';
+
+                // 5. เปิดฟังก์ชัน Notification ให้กล่องส่งข้อมูลมาเองแบบอัตโนมัติ
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleDataChanged);
+
+                // ดักจับกรณีสัญญาณหลุด
+                device.addEventListener('gattserverdisconnected', () => {
+                    updateStatus("การเชื่อมต่อหลุดจากกล่องคอนโทรลเลอร์!", "error");
+                });
+
+            } catch (error) {
+                console.error(error);
+                updateStatus(`เกิดข้อผิดพลาด: ${error.message}`, "error");
+            }
+        });
+
+        // ฟังก์ชันรับและแปลงค่าข้อมูลที่ส่งมาจากกล่อง
+        function handleDataChanged(event) {
+            const value = event.target.value; // ดึง DataView ออกมา
+            
+            // แปลงข้อมูลแบบที่ 1: แกะออกมาเป็นกลุ่มตัวเลข (Array of Bytes)
+            let rawBytes = [];
+            for (let i = 0; i < value.byteLength; i++) {
+                rawBytes.push(value.getUint8(i));
+            }
+            
+            // แปลงข้อมูลแบบที่ 2: แกะออกมาเป็นตัวอักษรข้อความ (String) เผื่อกล่องส่งมาตรงๆ
+            const decoder = new TextDecoder('utf-8');
+            const textData = decoder.decode(value).trim();
+
+            // แสดงผลลงบนหน้าเว็บ
+            const time = new Date().toLocaleTimeString();
+            
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerHTML = `
+                <span class="time">[${time}]</span><br>
+                ├─ ข้อความ (String): <span class="text-val">"${textData || 'N/A'}"</span><br>
+                └─ ชุดตัวเลข (Bytes): <span class="byte-val">[${rawBytes.join(', ')}]</span>
+            `;
+            
+            // ถ้าเป็นข้อมูลแถวแรก ให้ลบข้อความ Default ออกก่อน
+            if(logDiv.innerText.startsWith('//')) {
+                logDiv.innerHTML = '';
+            }
+            
+            logDiv.appendChild(logItem);
+            logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll ลงล่างสุด
+        }
+
+        // ฟังก์ชันเปลี่ยนข้อความสถานะและสีไฮไลต์
+        function updateStatus(text, type) {
+            statusDiv.innerText = statusDiv.innerText = "สถานะ: " + text;
+            statusDiv.className = ""; // clear class
+            
+            if (type === "success") statusDiv.classList.add('connected');
+            if (type === "error") statusDiv.classList.add('error');
+        }
+    </script>
+</body>
+</html>
