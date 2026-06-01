@@ -102,8 +102,10 @@
 
     <script>
         // กำหนดรหัส UUID ตามที่ตรวจพบในแอป nRF Connect (Unknown Service 0xFFE0)
-        const TARGET_SERVICE_UUID = 0xffe0;          
-        const TARGET_CHARACTERISTIC_UUID = 0xffe1;   
+        //const TARGET_SERVICE_UUID = 0xffe0; //         
+        //const TARGET_CHARACTERISTIC_UUID = 0xffe1;//
+        const TARGET_SERVICE_UUID = 'f000ffc0-0451-4000-b000-000000000000';          
+        const TARGET_CHARACTERISTIC_UUID = 'f000ffc1-0451-4000-b000-000000000000';
 
         const connectBtn = document.getElementById('connectBtn');
         const statusDiv = document.getElementById('status');
